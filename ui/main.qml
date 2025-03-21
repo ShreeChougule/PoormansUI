@@ -11,85 +11,47 @@ ApplicationWindow {
     title: "Signal Table from SQLite"
     Material.theme: Material.Light
 
+    property var editedRows: ({})  // JavaScript object to track changes
+
     Column {
         anchors.fill: parent
+        spacing: 5
 
-        // Search Bar for dynamic search
+        // Search Bar
         TextField {
             id: searchField
             width: parent.width
             placeholderText: "Search by Name"
-            onTextChanged: {
-                signalModel.filterData(searchField.text);  // Call filter function in C++
-            }
+            onTextChanged: signalModel.filterData(searchField.text)
             padding: 10
             font.pixelSize: 18
         }
 
-        // Custom header row (fixed at the top)
+        // Header Row
         Row {
+            id: headerField
             width: parent.width
             height: 40
             spacing: 2
 
-            // Index header (narrower than others)
-            Text {
-                width: parent.width / 6  // Adjusted width for index
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Index"
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            // VSS Parameter header
-            Text {
-                width: parent.width / 5
-                anchors.verticalCenter: parent.verticalCenter
-                text: "VSS Parameter"
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            // Mode header
-            Text {
-                width: parent.width / 5
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Mode"
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            // Period header
-            Text {
-                width: parent.width / 5
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Period (ms)"
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            // Value header
-            Text {
-                width: parent.width / 5
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Value"
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-            }
+            Text { width: parent.width / 6; text: "Index"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+            Text { width: parent.width / 5; text: "VSS Parameter"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+            Text { width: parent.width / 5; text: "Mode"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+            Text { width: parent.width / 5; text: "Period (ms)"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+            Text { width: parent.width / 5; text: "Value"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
         }
 
-        // ScrollView to make the ListView scrollable
+        // Scrollable Table View (Reduced Height to Fit Button)
         ScrollView {
             id: scrollView
             width: parent.width
-            height: parent.height - 40 // Adjusting height to account for the header row
+            height: parent.height - headerField.height - searchField.height - sendButton.height - 20
 
-            // ListView displaying data inside the scroll area
             ListView {
                 id: tableView
                 width: parent.width
                 spacing: 2
-                model: signalModel  // Updated model
+                model: signalModel
 
                 delegate: Rectangle {
                     width: tableView.width
@@ -99,56 +61,55 @@ ApplicationWindow {
 
                     Row {
                         anchors.fill: parent
-                        anchors.centerIn: parent
 
-                        // Index column (narrower)
-                        Text {
-                            width: parent.width / 6  // Adjusted width for index
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: (model.index + 1).toString()  // Display row number (1-based)
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        // VSS Parameter (from Signal table)
-                        Text {
-                            width: parent.width / 5
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: model.name  // The `name` field from Signal table
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        // Mode ComboBox (Override / Auto)
-                        ComboBox {
-                            id: modeCombo
-                            width: parent.width / 5
-                            anchors.verticalCenter: parent.verticalCenter
-                            model: ["Override", "Auto"]
-                            currentIndex: 0  // Default to "Override"
-                            // Bind the "Period (ms)" text field enabled property based on selection
-                            onCurrentIndexChanged: {
-                                periodField.enabled = (currentIndex === 1); // Enable when "Auto" is selected
-                            }
-                        }
-
-                        // Period (Editable only when "Auto" is selected)
-                        TextField {
-                            id: periodField
-                            width: parent.width / 5
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: model.period  // Bind the text field to the `period` column
-                            enabled: false  // Default to disabled
-                        }
-
-                        // Value (Editable TextField)
+                        Text { width: parent.width / 6; text: (model.index + 1).toString(); horizontalAlignment: Text.AlignHCenter }
+                        Text { width: parent.width / 5; text: model.name; horizontalAlignment: Text.AlignHCenter }
+                        ComboBox { id: modeCombo; width: parent.width / 5; model: ["Override", "Auto"]; currentIndex: 0 }
+                        TextField { id: periodField; width: parent.width / 5; text: model.period; enabled: false }
+                        // Editable Value Column
                         TextField {
                             id: valueField
                             width: parent.width / 5
                             anchors.verticalCenter: parent.verticalCenter
-                            text: model.value  // Bind the text field to the `value` column
+                            text: model.value  // Bind to value column
+
+                            onTextChanged: {
+                                editedRows[model.index] = { "name": model.name, "value": valueField.text };
+                            }
                         }
                     }
+
                 }
             }
         }
+
+        Button {
+            id: sendButton
+            text: "Send"
+            width: parent.width * 0.2
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            onClicked: {
+                var dataToSend = [];
+                for (var key in applicationWindow.editedRows) {
+                    var entry = applicationWindow.editedRows[key];
+                    dataToSend.push(entry.name + " " + entry.value);
+                }
+
+                if (dataToSend.length > 0) {
+                    console.log("Sending data:", dataToSend);
+                    signalModel.sendData(dataToSend);
+
+                    // ✅ Clear editedRows after sending data
+                    applicationWindow.editedRows = {};
+                    console.log("Edited rows cleared:", JSON.stringify(applicationWindow.editedRows));
+                } else {
+                    console.log("No changes detected.");
+                }
+            }
+        }
+
+
     }
 }
+

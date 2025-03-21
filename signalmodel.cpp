@@ -4,13 +4,11 @@
 #include <QDebug>
 
 SignalModel::SignalModel(QObject *parent) : QSqlQueryModel(parent) {
-    filterData(""); // to load every data
+    filterData(""); // to load every data initially
 }
-
 
 // Filter data based on the search term
 void SignalModel::filterData(const QString &searchTerm) {
-    // Update query with a filter based on search term
     QString queryStr = QString(R"(
         SELECT Signal.name, Signal_Attributes.default_value
         FROM Signal
@@ -42,3 +40,23 @@ QHash<int, QByteArray> SignalModel::roleNames() const {
     roles[Qt::UserRole + 1] = "value";
     return roles;
 }
+
+// Handle the data sent from QML (Name + Value)
+void SignalModel::sendData(const QStringList &data) {
+    qDebug() << "Recieved data from qml, data size -  "<<data.size();
+    for (const QString &entry : data) {
+        qDebug() << "Sending data:" << entry;  // You can replace this with actual sending logic
+    }
+}
+
+QString SignalModel::getDataAt(int index, int role) {
+    if (index < 0 || index >= rowCount()) return "";
+
+    QModelIndex modelIndex = this->index(index, 0);  // Get model index
+    return data(modelIndex, role).toString();
+}
+
+int SignalModel::rowCount() {
+    return QSqlQueryModel::rowCount();  // Get total rows
+}
+
