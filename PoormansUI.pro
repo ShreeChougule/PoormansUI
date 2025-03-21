@@ -14,12 +14,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        src/main.cpp \
-        src/signalmodel.cpp \
-        src/moc_signalmodel.cpp
+        main.cpp \
+        signalmodel.cpp \
+#        moc_signalmodel.cpp
 
 HEADERS += \
-        src/signalmodel.h
+        signalmodel.h
 
 RESOURCES += ui/qml.qrc
 

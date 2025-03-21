@@ -4,15 +4,21 @@
 #include <QDebug>
 
 SignalModel::SignalModel(QObject *parent) : QSqlQueryModel(parent) {
-    refresh();  // Load initial data
+    filterData(""); // to load every data
 }
 
-void SignalModel::refresh() {
-    setQuery(R"(
+
+// Filter data based on the search term
+void SignalModel::filterData(const QString &searchTerm) {
+    // Update query with a filter based on search term
+    QString queryStr = QString(R"(
         SELECT Signal.name, Signal_Attributes.default_value
         FROM Signal
         LEFT JOIN Signal_Attributes ON Signal.signal_id = Signal_Attributes.signal_id
-    )");
+        WHERE Signal.name LIKE '%%1%'
+    )").arg(searchTerm);
+
+    setQuery(queryStr);
 
     if (lastError().isValid()) {
         qDebug() << "SQL Error:" << lastError().text();
@@ -36,4 +42,3 @@ QHash<int, QByteArray> SignalModel::roleNames() const {
     roles[Qt::UserRole + 1] = "value";
     return roles;
 }
-

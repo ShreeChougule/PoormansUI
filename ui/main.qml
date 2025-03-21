@@ -14,6 +14,18 @@ ApplicationWindow {
     Column {
         anchors.fill: parent
 
+        // Search Bar for dynamic search
+        TextField {
+            id: searchField
+            width: parent.width
+            placeholderText: "Search by Name"
+            onTextChanged: {
+                signalModel.filterData(searchField.text);  // Call filter function in C++
+            }
+            padding: 10
+            font.pixelSize: 18
+        }
+
         // Custom header row (fixed at the top)
         Row {
             width: parent.width
@@ -76,16 +88,6 @@ ApplicationWindow {
             ListView {
                 id: tableView
                 width: parent.width
-                anchors.horizontalCenterOffset: 0
-                anchors.top: parent.top
-                anchors.topMargin: 40
-                anchors.bottom: applicationWindow.top
-                anchors.bottomMargin: -480
-                anchors.left: applicationWindow.right
-                anchors.leftMargin: -800
-                anchors.right: applicationWindow.left
-                anchors.rightMargin: -800
-                anchors.horizontalCenter: applicationWindow.horizontalCenter
                 spacing: 2
                 model: signalModel  // Updated model
 

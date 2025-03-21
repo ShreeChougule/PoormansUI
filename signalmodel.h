@@ -5,16 +5,16 @@
 #include <QObject>
 
 class SignalModel : public QSqlQueryModel {
-    Q_OBJECT  // Important: Enables Qt's meta-object system
+    Q_OBJECT
 public:
     explicit SignalModel(QObject *parent = nullptr);
     virtual ~SignalModel(){}
 
-    void refresh();  // Method to reload data
+    Q_INVOKABLE void filterData(const QString &searchTerm);  // Make filterData invokable
+
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 };
 
 #endif // SIGNALMODEL_H
-

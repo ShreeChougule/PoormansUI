@@ -2,7 +2,9 @@
 #include <QQmlApplicationEngine>
 #include <QtSql/QSqlDatabase>
 #include <QQmlContext>
-#include "signalmodel.h"  // Include the header
+#include <QDebug>
+#include "signalmodel.h"
+
 
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
@@ -13,12 +15,12 @@ int main(int argc, char *argv[]) {
     db.setDatabaseName("/home/kpit/Desktop/PoormansUI/common/vehicle_twin.db");
 
     if (!db.open()) {
-        //qWarning() << "Error: Unable to open database!" << db.lastError().text();
         return -1;
     }
 
-    // Create and expose the model to QML
+    // Create and expose the SignalModel and SignalSender to QML
     SignalModel signalModel;
+
     engine.rootContext()->setContextProperty("signalModel", &signalModel);
 
     // Load QML file
