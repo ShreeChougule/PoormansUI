@@ -76,22 +76,33 @@ ApplicationWindow {
                                 periodField.enabled = (currentIndex === 1); // ✅ Enable Period when "Auto" is selected
                             }
                         }
-                        // Period (Editable only when "Auto" is selected)
+
+                        // Period Column (Track Changes Only if Enabled)
                         TextField {
                             id: periodField
                             width: parent.width / 5
                             anchors.verticalCenter: parent.verticalCenter
                             text: model.period
-                            enabled: modeCombo.currentIndex === 1  // ✅ Initially enable only if "Auto" is selected
-                        }                        // Editable Value Column
+                            enabled: modeCombo.currentIndex === 1
+                            onEditingFinished: {
+                                if (enabled && text !== model.period) {  // ✅ Store only if modified & in Auto mode
+                                    applicationWindow.editedRows[model.name] = { name: model.name, value: text };
+                                    console.log("Edited Rows Updated:", JSON.stringify(applicationWindow.editedRows));
+                                }
+                            }
+                        }
+
+                        // Value Column (Track Changes)
                         TextField {
                             id: valueField
                             width: parent.width / 5
                             anchors.verticalCenter: parent.verticalCenter
-                            text: model.value  // Bind to value column
-
-                            onTextChanged: {
-                                editedRows[model.index] = { "name": model.name, "value": valueField.text };
+                            text: model.value
+                            onEditingFinished: {
+                                if (text !== model.value) {  // ✅ Store only if modified
+                                    applicationWindow.editedRows[model.name] = { name: model.name, value: text };
+                                    console.log("Edited Rows Updated:", JSON.stringify(applicationWindow.editedRows));
+                                }
                             }
                         }
                     }
@@ -119,11 +130,13 @@ ApplicationWindow {
 
                     // ✅ Clear editedRows after sending data
                     applicationWindow.editedRows = {};
+                    console.log("Edited rows cleared:", JSON.stringify(applicationWindow.editedRows));
                 } else {
                     console.log("No changes detected.");
                 }
             }
         }
+
 
 
     }
