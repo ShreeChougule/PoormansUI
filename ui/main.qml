@@ -64,9 +64,26 @@ ApplicationWindow {
 
                         Text { width: parent.width / 6; text: (model.index + 1).toString(); horizontalAlignment: Text.AlignHCenter }
                         Text { width: parent.width / 5; text: model.name; horizontalAlignment: Text.AlignHCenter }
-                        ComboBox { id: modeCombo; width: parent.width / 5; model: ["Override", "Auto"]; currentIndex: 0 }
-                        TextField { id: periodField; width: parent.width / 5; text: model.period; enabled: false }
-                        // Editable Value Column
+                        // Mode ComboBox (Override / Auto)
+                        ComboBox {
+                            id: modeCombo
+                            width: parent.width / 5
+                            anchors.verticalCenter: parent.verticalCenter
+                            model: ["Override", "Auto"]
+                            currentIndex: model.mode === "Auto" ? 1 : 0 // Set initial value
+
+                            onCurrentIndexChanged: {
+                                periodField.enabled = (currentIndex === 1); // ✅ Enable Period when "Auto" is selected
+                            }
+                        }
+                        // Period (Editable only when "Auto" is selected)
+                        TextField {
+                            id: periodField
+                            width: parent.width / 5
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: model.period
+                            enabled: modeCombo.currentIndex === 1  // ✅ Initially enable only if "Auto" is selected
+                        }                        // Editable Value Column
                         TextField {
                             id: valueField
                             width: parent.width / 5
@@ -102,7 +119,6 @@ ApplicationWindow {
 
                     // ✅ Clear editedRows after sending data
                     applicationWindow.editedRows = {};
-                    console.log("Edited rows cleared:", JSON.stringify(applicationWindow.editedRows));
                 } else {
                     console.log("No changes detected.");
                 }
