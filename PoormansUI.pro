@@ -7,6 +7,7 @@ CONFIG += c++11
 # depend on your compiler). Refer to the documentation for the
 # deprecated API to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
+DEFINES+= SOCKET_COMM
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -16,10 +17,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         signalmodel.cpp \
+        SocketClient.cpp
 #        moc_signalmodel.cpp
 
 HEADERS += \
-        signalmodel.h
+        signalmodel.h \
+        SocketClient.h
 
 RESOURCES += ui/qml.qrc
 

@@ -60,3 +60,11 @@ int SignalModel::rowCount() {
     return QSqlQueryModel::rowCount();  // Get total rows
 }
 
+void SignalModel::connectToServer(const QString &inputIP){
+    m_socket.connectToServer(inputIP.toStdString().c_str(),PORT);
+}
+
+void SignalModel::disconnectFromServer(){
+    m_socket.closeSocket();
+}
+

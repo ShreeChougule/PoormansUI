@@ -12,15 +12,41 @@ ApplicationWindow {
     Material.theme: Material.Light
 
     property var editedRows: ({})  // JavaScript object to track changes
-
     Column {
+        id: column1
         anchors.fill: parent
-        spacing: 5
+
+        // ✅ Manually creating a MenuBar at the top
+        MenuBar {
+            Menu {
+                title: "Connection"
+                MenuItem {
+                    text: "Connect"
+                    onTriggered: connectDialog.open()
+                }
+                MenuItem {
+                    text: "Disconnect"
+                    onTriggered: {
+                        console.log("Disconnecting");
+                        signalModel.disconnectFromServer();  // ✅ Call SignalModel function
+                    }
+                }
+            }
+        }
+
+
+        Column {
+            id: column
+            anchors.topMargin: 30
+            anchors.fill: parent
+            spacing: 5
 
         // Search Bar
         TextField {
             id: searchField
             width: parent.width
+            anchors.top: parent.top
+            anchors.topMargin: 0
             placeholderText: "Search by Name"
             onTextChanged: signalModel.filterData(searchField.text)
             padding: 10
@@ -32,6 +58,8 @@ ApplicationWindow {
             id: headerField
             width: parent.width
             height: 40
+            anchors.top: searchField.bottom
+            anchors.topMargin: 5
             spacing: 2
 
             Text { width: parent.width / 6; text: "Index"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
@@ -44,8 +72,14 @@ ApplicationWindow {
         // Scrollable Table View (Reduced Height to Fit Button)
         ScrollView {
             id: scrollView
-            width: parent.width
-            height: parent.height - headerField.height - searchField.height - sendButton.height - 20
+            anchors.right: parent.right
+            anchors.rightMargin: 0
+            anchors.left: parent.left
+            anchors.leftMargin: 0
+            anchors.bottom: sendButton.top
+            anchors.bottomMargin: 40
+            anchors.top: headerField.bottom
+            anchors.topMargin: 5
 
             ListView {
                 id: tableView
@@ -114,6 +148,8 @@ ApplicationWindow {
         Button {
             id: sendButton
             text: "Send"
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 0
             width: parent.width * 0.2
             anchors.horizontalCenter: parent.horizontalCenter
 
@@ -139,6 +175,42 @@ ApplicationWindow {
 
 
 
+        // ✅ Server IP Popup Dialog
+        Dialog {
+            id: connectDialog
+            title: "Enter Server IP"
+            modal: true
+            standardButtons: Dialog.Cancel | Dialog.Ok
+            closePolicy: Popup.CloseOnEscape
+
+            ColumnLayout {
+                spacing: 10
+                width: parent.width
+
+                RowLayout {
+                    spacing: 5
+                    Label { text: "Server IP" }
+                    TextField {
+                        id: ipInput
+                        Layout.fillWidth: true
+                        placeholderText: "Enter IP"
+                    }
+                }
+            }
+
+            onAccepted: {
+                console.log("Connecting to IP:", ipInput.text);
+                signalModel.connectToServer(ipInput.text);  // ✅ Call SignalModel function
+            }
+        }
+    }
+
     }
 }
 
+
+/*##^##
+Designer {
+    D{i:13;anchors_height:199;anchors_width:800}
+}
+##^##*/
