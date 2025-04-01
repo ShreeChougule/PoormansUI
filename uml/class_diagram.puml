@@ -1,0 +1,40 @@
+@startuml
+
+protocol        kpit_protocol
+protocol        SomeIP
+
+interface       IDataParser
+interface       IDataSink
+interface       ISimService
+
+class KpitDataDataParser
+class SomeIpDataParser
+ KpitDataDataParser .. kpit_protocol
+ SomeIpDataParser .. SomeIP
+ IDataParser <|..	KpitDataDataParser
+ IDataParser <|..	SomeIpDataParser
+ SimService --> IDataParser
+
+
+class SimService
+class SignalModel
+package UI <<Rectangle>>{
+}
+SignalModel --> ISimService
+SimService ..|> ISimService
+SimService -- SignalModel
+SignalModel -- UI
+
+class SocketSink
+class SocketClient
+SocketSink ..|> IDataSink
+SocketSink -- SocketClient
+SimService --> IDataSink
+
+
+
+
+
+
+
+@enduml

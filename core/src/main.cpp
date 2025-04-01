@@ -3,7 +3,7 @@
 #include <QtSql/QSqlDatabase>
 #include <QQmlContext>
 #include <QDebug>
-#include "signalmodel.h"
+#include "core/inc/signalmodel.h"
 
 
 int main(int argc, char *argv[]) {

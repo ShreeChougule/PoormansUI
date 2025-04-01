@@ -8,7 +8,7 @@ ApplicationWindow {
     visible: true
     width: 800
     height: 400
-    title: "Signal Table from SQLite"
+    title: "Poorman's UI"
     Material.theme: Material.Light
 
     property var editedRows: ({})  // JavaScript object to track changes
@@ -120,7 +120,7 @@ ApplicationWindow {
                             enabled: modeCombo.currentIndex === 1
                             onEditingFinished: {
                                 if (enabled && text !== model.period) {  // ✅ Store only if modified & in Auto mode
-                                    applicationWindow.editedRows[model.name] = { name: model.name, value: text };
+                                    applicationWindow.editedRows[model.name] = { name: model.name, period: text, value: model.value };
                                     console.log("Edited Rows Updated:", JSON.stringify(applicationWindow.editedRows));
                                 }
                             }
@@ -134,7 +134,7 @@ ApplicationWindow {
                             text: model.value
                             onEditingFinished: {
                                 if (text !== model.value) {  // ✅ Store only if modified
-                                    applicationWindow.editedRows[model.name] = { name: model.name, value: text };
+                                    applicationWindow.editedRows[model.name] = { name: model.name, period: model.period, value: text };
                                     console.log("Edited Rows Updated:", JSON.stringify(applicationWindow.editedRows));
                                 }
                             }
@@ -157,7 +157,7 @@ ApplicationWindow {
                 var dataToSend = [];
                 for (var key in applicationWindow.editedRows) {
                     var entry = applicationWindow.editedRows[key];
-                    dataToSend.push(entry.name + " " + entry.value);
+                    dataToSend.push(entry.name + " " + entry.period + " " + entry.value);
                 }
 
                 if (dataToSend.length > 0) {

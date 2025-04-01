@@ -15,14 +15,14 @@ DEFINES+= SOCKET_COMM
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        main.cpp \
-        signalmodel.cpp \
-        SocketClient.cpp
-#        moc_signalmodel.cpp
+        core/src/main.cpp \
+        core/src/signalmodel.cpp \
+        core/src/SocketClient.cpp
+#       core/src/moc_signalmodel.cpp
 
 HEADERS += \
-        signalmodel.h \
-        SocketClient.h
+        core/inc/signalmodel.h \
+        core/inc/SocketClient.h
 
 RESOURCES += ui/qml.qrc
 

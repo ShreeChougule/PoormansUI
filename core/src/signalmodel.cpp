@@ -1,4 +1,4 @@
-#include "signalmodel.h"
+#include "core/inc/signalmodel.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
