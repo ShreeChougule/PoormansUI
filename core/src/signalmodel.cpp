@@ -3,68 +3,99 @@
 #include <QSqlError>
 #include <QDebug>
 
-SignalModel::SignalModel(QObject *parent) : QSqlQueryModel(parent) {
-    filterData(""); // to load every data initially
+SignalModel::SignalModel(QObject *parent) : QAbstractListModel(parent) {
+    initialize();
 }
 
-// Filter data based on the search term
-void SignalModel::filterData(const QString &searchTerm) {
-    QString queryStr = QString(R"(
+// ✅ Load data from DB into local structure
+void SignalModel::initialize() {
+    allSignals.clear();
+
+    QSqlQuery query(R"(
         SELECT Signal.name, Signal_Attributes.default_value
         FROM Signal
         LEFT JOIN Signal_Attributes ON Signal.signal_id = Signal_Attributes.signal_id
-        WHERE Signal.name LIKE '%%1%'
-    )").arg(searchTerm);
+    )");
 
-    setQuery(queryStr);
-
-    if (lastError().isValid()) {
-        qDebug() << "SQL Error:" << lastError().text();
+    while (query.next()) {
+        SignalEntry entry;
+        entry.name = query.value(0).toString();
+        entry.mode = "Override";
+        entry.period = 1000;
+        entry.value = query.value(1).toString();
+        allSignals.append(entry);
     }
+
+    if (query.lastError().isValid()) {
+        qDebug() << "SQL Error:" << query.lastError().text();
+    }
+
+    qDebug() << "Loaded" << allSignals.size() << "signals from DB.";
+    filterData("");  // 🔹 Ensure initial data is loaded
 }
 
-// Override data retrieval
+// ✅ Filter from local structure instead of DB
+void SignalModel::filterData(const QString &searchTerm) {
+    beginResetModel();
+    filteredSignals.clear();
+
+    for (const auto &entry : allSignals) {
+        if (entry.name.contains(searchTerm, Qt::CaseInsensitive)) {
+            filteredSignals.append(entry);
+        }
+    }
+
+    qDebug() << "Filtered signals count:" << filteredSignals.size(); // Debugging
+
+    endResetModel();
+}
+
+int SignalModel::rowCount(const QModelIndex &) const {
+    return filteredSignals.size();
+}
+
 QVariant SignalModel::data(const QModelIndex &index, int role) const {
-    if (role < Qt::UserRole) {
-        return QSqlQueryModel::data(index, role);
-    }
+    if (!index.isValid() || index.row() >= filteredSignals.size()) return QVariant();
 
-    int columnIdx = role - Qt::UserRole;
-    return QSqlQueryModel::data(this->index(index.row(), columnIdx), Qt::DisplayRole);
+    const SignalEntry &entry = filteredSignals[index.row()];
+    switch (role) {
+        case Qt::UserRole: return entry.name;
+        case Qt::UserRole + 1: return entry.mode;
+        case Qt::UserRole + 2: return entry.period;
+        case Qt::UserRole + 3: return entry.value;
+    }
+    return QVariant();
 }
 
-// Define custom roles
 QHash<int, QByteArray> SignalModel::roleNames() const {
-    QHash<int, QByteArray> roles;
-    roles[Qt::UserRole] = "name";
-    roles[Qt::UserRole + 1] = "value";
-    return roles;
+    return { {Qt::UserRole, "name"}, {Qt::UserRole + 1, "mode"}, {Qt::UserRole + 2, "period"}, {Qt::UserRole + 3, "value"} };
 }
 
-// Handle the data sent from QML (Name + Value)
-void SignalModel::sendData(const QStringList &data) {
-    qDebug() << "Recieved data from qml, data size -  "<<data.size();
-    for (const QString &entry : data) {
-        qDebug() << "Sending data:" << entry;  // You can replace this with actual sending logic
+// ✅ Update local structure when user edits a field
+void SignalModel::updateData(const QString &name, const QString &mode, int period, const QString &value) {
+    for (auto &entry : allSignals) {
+        if (entry.name == name) {
+            entry.mode = mode;
+            entry.period = period;
+            entry.value = value;
+            break;
+        }
     }
 }
 
-QString SignalModel::getDataAt(int index, int role) {
-    if (index < 0 || index >= rowCount()) return "";
-
-    QModelIndex modelIndex = this->index(index, 0);  // Get model index
-    return data(modelIndex, role).toString();
+// ✅ Send updated data
+void SignalModel::sendData() {
+    qDebug() << "Sending updated data:";
+    for (const auto &entry : allSignals) {
+        qDebug() << entry.name << entry.mode << entry.period << entry.value;
+    }
 }
 
-int SignalModel::rowCount() {
-    return QSqlQueryModel::rowCount();  // Get total rows
+// ✅ Socket Functions
+void SignalModel::connectToServer(const QString &inputIP) {
+    m_socket.connectToServer(inputIP.toStdString().c_str(), PORT);
 }
 
-void SignalModel::connectToServer(const QString &inputIP){
-    m_socket.connectToServer(inputIP.toStdString().c_str(),PORT);
-}
-
-void SignalModel::disconnectFromServer(){
+void SignalModel::disconnectFromServer() {
     m_socket.closeSocket();
 }
-

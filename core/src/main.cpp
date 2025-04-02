@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
     // Create and expose the SignalModel and SignalSender to QML
     SignalModel signalModel;
-
+    signalModel.initialize();  // 🔹 Ensure it loads data before binding
     engine.rootContext()->setContextProperty("signalModel", &signalModel);
 
     // Load QML file
