@@ -9,7 +9,9 @@ SignalModel::SignalModel(QObject *parent) : QAbstractListModel(parent) {
 
 // ✅ Load data from DB into local structure
 void SignalModel::initialize() {
+    beginResetModel();
     allSignals.clear();
+    filteredKeys.clear();
 
     QSqlQuery query(R"(
         SELECT Signal.name, Signal_Attributes.default_value
@@ -17,85 +19,106 @@ void SignalModel::initialize() {
         LEFT JOIN Signal_Attributes ON Signal.signal_id = Signal_Attributes.signal_id
     )");
 
+    QList<SignalData> fetchedData;
+    int signalIndex = 0;
+
     while (query.next()) {
-        SignalEntry entry;
+        SignalData entry;
+        entry.index = ++signalIndex;
         entry.name = query.value(0).toString();
         entry.mode = "Override";
-        entry.period = 1000;
+        entry.period = "1000";
         entry.value = query.value(1).toString();
-        allSignals.append(entry);
+        fetchedData.append(entry);
     }
 
     if (query.lastError().isValid()) {
         qDebug() << "SQL Error:" << query.lastError().text();
     }
 
-    qDebug() << "Loaded" << allSignals.size() << "signals from DB.";
-    filterData("");  // 🔹 Ensure initial data is loaded
-}
-
-// ✅ Filter from local structure instead of DB
-void SignalModel::filterData(const QString &searchTerm) {
-    beginResetModel();
-    filteredSignals.clear();
-
-    for (const auto &entry : allSignals) {
-        if (entry.name.contains(searchTerm, Qt::CaseInsensitive)) {
-            filteredSignals.append(entry);
-        }
+    for (const auto &signal : fetchedData) {
+        allSignals.insert(signal.name, signal);
     }
 
-    qDebug() << "Filtered signals count:" << filteredSignals.size(); // Debugging
+    // Initially, show all signals
+    filteredKeys = allSignals.keys();
 
     endResetModel();
 }
 
-int SignalModel::rowCount(const QModelIndex &) const {
-    return filteredSignals.size();
+// ✅ Define roles
+QHash<int, QByteArray> SignalModel::roleNames() const {
+    return {
+        { Qt::UserRole, "index" },
+        { NameRole, "name" },
+        { ModeRole, "mode" },
+        { PeriodRole, "period" },
+        { ValueRole, "value" }
+    };
+}
+
+// ✅ Fast updates using `QMap`
+void SignalModel::updateValue(const QString &name, const QString &newValue) {
+    if (allSignals.contains(name)) {
+        allSignals[name].value = newValue;
+        int row = filteredKeys.indexOf(name);
+        if (row != -1) {
+            emit dataChanged(index(row, 0), index(row, 0), { ValueRole });
+        }
+        qDebug() << "Updated value for:" << name << "New Value:" << newValue;
+    }
+}
+
+void SignalModel::updateMode(const QString &name, const QString &newMode) {
+    if (allSignals.contains(name)) {
+        allSignals[name].mode = newMode;
+        int row = filteredKeys.indexOf(name);
+        if (row != -1) {
+            emit dataChanged(index(row, 0), index(row, 0), { ModeRole });
+        }
+        qDebug() << "Updated mode for:" << name << "New Mode:" << newMode;
+    }
+}
+
+// ✅ Filtering function
+void SignalModel::filterData(const QString &searchText) {
+    beginResetModel();
+    filteredKeys.clear();
+
+    if (searchText.isEmpty()) {
+        filteredKeys = allSignals.keys();  // Show all if no filter
+    } else {
+        for (const QString &key : allSignals.keys()) {
+            if (key.contains(searchText, Qt::CaseInsensitive)) {
+                filteredKeys.append(key);
+            }
+        }
+    }
+
+    endResetModel();
+    qDebug() << "Filtered signals count:" << filteredKeys.size();
+}
+
+// ✅ Correct implementation of rowCount()
+int SignalModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);  // Avoids unused parameter warning
+    return filteredKeys.size();  // ✅ Use filtered keys, not allSignals
 }
 
 QVariant SignalModel::data(const QModelIndex &index, int role) const {
-    if (!index.isValid() || index.row() >= filteredSignals.size()) return QVariant();
+    if (index.row() < 0 || index.row() >= filteredKeys.size()) {
+        return QVariant();
+    }
 
-    const SignalEntry &entry = filteredSignals[index.row()];
+    const QString &signalKey = filteredKeys.at(index.row());  // ✅ Correct indexing
+    const SignalData &signal = allSignals.value(signalKey);
+
     switch (role) {
-        case Qt::UserRole: return entry.name;
-        case Qt::UserRole + 1: return entry.mode;
-        case Qt::UserRole + 2: return entry.period;
-        case Qt::UserRole + 3: return entry.value;
+        case Qt::UserRole: return signal.index;
+        case NameRole: return signal.name;
+        case ModeRole: return signal.mode;
+        case PeriodRole: return signal.period;
+        case ValueRole: return signal.value;
+        default: return QVariant();
     }
-    return QVariant();
-}
-
-QHash<int, QByteArray> SignalModel::roleNames() const {
-    return { {Qt::UserRole, "name"}, {Qt::UserRole + 1, "mode"}, {Qt::UserRole + 2, "period"}, {Qt::UserRole + 3, "value"} };
-}
-
-// ✅ Update local structure when user edits a field
-void SignalModel::updateData(const QString &name, const QString &mode, int period, const QString &value) {
-    for (auto &entry : allSignals) {
-        if (entry.name == name) {
-            entry.mode = mode;
-            entry.period = period;
-            entry.value = value;
-            break;
-        }
-    }
-}
-
-// ✅ Send updated data
-void SignalModel::sendData() {
-    qDebug() << "Sending updated data:";
-    for (const auto &entry : allSignals) {
-        qDebug() << entry.name << entry.mode << entry.period << entry.value;
-    }
-}
-
-// ✅ Socket Functions
-void SignalModel::connectToServer(const QString &inputIP) {
-    m_socket.connectToServer(inputIP.toStdString().c_str(), PORT);
-}
-
-void SignalModel::disconnectFromServer() {
-    m_socket.closeSocket();
 }

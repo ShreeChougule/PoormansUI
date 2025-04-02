@@ -6,18 +6,18 @@ import QtQuick.Controls.Material 2.5
 ApplicationWindow {
     id: applicationWindow
     visible: true
-    width: 800
-    height: 400
+    width: 900
+    height: 500
     title: "Poorman's UI"
     Material.theme: Material.Light
 
     property var editedRows: ({})  // JavaScript object to track changes
 
-    Column {
-        id: column1
+    ColumnLayout {
         anchors.fill: parent
+        spacing: 5
 
-        // ✅ Restored MenuBar Placement
+        // ✅ MenuBar at the Top
         MenuBar {
             Menu {
                 title: "Connection"
@@ -27,176 +27,133 @@ ApplicationWindow {
                 }
                 MenuItem {
                     text: "Disconnect"
-                    onTriggered: {
-                        console.log("Disconnecting");
-                        signalModel.disconnectFromServer();
-                    }
+                    onTriggered: signalModel.disconnectFromServer()
                 }
             }
         }
 
-        Column {
-            id: column
-            anchors.fill: parent
-            anchors.topMargin: 30
-            spacing: 5
+        // ✅ Search Bar (Aligned Properly)
+        TextField {
+            id: searchField
+            Layout.fillWidth: true
+            placeholderText: "Search by Name"
+            onTextChanged: signalModel.filterData(searchField.text)
+            padding: 10
+            font.pixelSize: 18
+        }
 
-            // ✅ Search Bar (Older Formatting Restored)
-            TextField {
-                id: searchField
-                width: parent.width
-                anchors.top: parent.top
-                anchors.topMargin: 0
-                placeholderText: "Search by Name"
-                onTextChanged: signalModel.filterData(searchField.text)
-                padding: 10
-                font.pixelSize: 18
+        // ✅ Header Row (Aligned Properly)
+        Rectangle {
+            Layout.fillWidth: true
+            height: 40
+            color: "#B0BEC5"  // Light Gray
+            border.color: "#909090"
+
+            RowLayout {
+                anchors.fill: parent
+                spacing: 0
+
+                Text { Layout.preferredWidth: parent.width * 0.10; text: "Index"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+                Text { Layout.preferredWidth: parent.width * 0.30; text: "VSS Parameter"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+                Text { Layout.preferredWidth: parent.width * 0.20; text: "Mode"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+                Text { Layout.preferredWidth: parent.width * 0.20; text: "Period (ms)"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
+                Text { Layout.preferredWidth: parent.width * 0.20; text: "Value"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
             }
+        }
 
-            // ✅ Header Row (Original Anchors Restored)
-            Row {
-                id: headerField
+        // ✅ Scrollable Table (Fixed Alignment)
+        ScrollView {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            ListView {
+                id: tableView
                 width: parent.width
-                height: 40
-                anchors.top: searchField.bottom
-                anchors.topMargin: 5
                 spacing: 2
+                model: signalModel
 
-                Text { width: parent.width / 6; text: "Index"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
-                Text { width: parent.width / 5; text: "VSS Parameter"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
-                Text { width: parent.width / 5; text: "Mode"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
-                Text { width: parent.width / 5; text: "Period (ms)"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
-                Text { width: parent.width / 5; text: "Value"; font.bold: true; horizontalAlignment: Text.AlignHCenter }
-            }
-
-            // ✅ Scrollable Table View (Restored Anchors)
-            ScrollView {
-                id: scrollView
-                anchors.right: parent.right
-                anchors.rightMargin: 0
-                anchors.left: parent.left
-                anchors.leftMargin: 0
-                anchors.top: headerField.bottom
-                anchors.topMargin: 5
-                anchors.bottom: sendButton.top
-                anchors.bottomMargin: 40  // 🔹 Keeping it properly spaced
-
-                ListView {
-                    id: tableView
-                    width: parent.width
-                    spacing: 2
-                    model: signalModel
-
-                    delegate: Rectangle {
-                        width: tableView.width
-                        height: 40
-                        border.color: "blue"
-                        color: model.index % 2 === 0 ? "lightgray" : "white"
-
-                        Row {
-                            anchors.fill: parent
-
-                            Text { width: parent.width / 6; text: (model.index + 1).toString(); horizontalAlignment: Text.AlignHCenter }
-                            Text { width: parent.width / 5; text: model.name; horizontalAlignment: Text.AlignHCenter }
-
-                            // Mode ComboBox (Override / Auto)
-                            ComboBox {
-                                id: modeCombo
-                                width: parent.width / 5
-                                anchors.verticalCenter: parent.verticalCenter
-                                model: ["Override", "Auto"]
-                                currentIndex: model.mode === "Auto" ? 1 : 0
-
-                                onCurrentIndexChanged: {
-                                    periodField.enabled = (currentIndex === 1);
-                                    signalModel.updateMode(model.name, currentIndex === 1 ? "Auto" : "Override");
-                                }
-                            }
-
-                            // Period Column (Editable only if "Auto" Mode)
-                            TextField {
-                                id: periodField
-                                width: parent.width / 5
-                                text: model.period
-                                enabled: modeCombo.currentIndex === 1
-                                onEditingFinished: {
-                                    signalModel.updatePeriod(model.name, text);
-                                    applicationWindow.editedRows[model.name] = { name: model.name, period: text, value: model.value };
-                                }
-                            }
-
-                            // Value Column
-                            TextField {
-                                id: valueField
-                                width: parent.width / 5
-                                text: model.value
-                                onEditingFinished: {
-                                    signalModel.updateValue(model.name, text);
-                                    applicationWindow.editedRows[model.name] = { name: model.name, period: model.period, value: text };
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ✅ Send Button (Older Anchors Restored)
-            Button {
-                id: sendButton
-                text: "Send"
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 0
-                width: parent.width * 0.2
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                onClicked: {
-                    var dataToSend = [];
-                    for (var key in applicationWindow.editedRows) {
-                        var entry = applicationWindow.editedRows[key];
-                        dataToSend.push(entry.name + " " + entry.period + " " + entry.value);
-                    }
-
-                    if (dataToSend.length > 0) {
-                        console.log("Sending data:", dataToSend);
-                        signalModel.sendData(dataToSend);
-
-                        // ✅ Clear editedRows after sending data
-                        applicationWindow.editedRows = {};
-                        console.log("Edited rows cleared:", JSON.stringify(applicationWindow.editedRows));
-                    } else {
-                        console.log("No changes detected.");
-                    }
-                }
-            }
-
-            // ✅ Server IP Popup Dialog
-            Dialog {
-                id: connectDialog
-                title: "Enter Server IP"
-                modal: true
-                standardButtons: Dialog.Cancel | Dialog.Ok
-                closePolicy: Popup.CloseOnEscape
-
-                ColumnLayout {
-                    spacing: 10
-                    width: parent.width
+                delegate: Rectangle {
+                    width: tableView.width
+                    height: 40
+                    color: model.index % 2 === 0 ? "#ECEFF1" : "white"
+                    border.color: "blue"
 
                     RowLayout {
-                        spacing: 5
-                        Label { text: "Server IP" }
+                        anchors.fill: parent
+                        spacing: 0
+
+                        Text { Layout.preferredWidth: parent.width * 0.10; text: (model.index + 1).toString(); horizontalAlignment: Text.AlignHCenter }
+                        Text { Layout.preferredWidth: parent.width * 0.30; text: model.name; horizontalAlignment: Text.AlignHCenter }
+
+                        ComboBox {
+                            Layout.preferredWidth: parent.width * 0.20
+                            model: ["Override", "Auto"]
+                            currentIndex: model.mode === "Auto" ? 1 : 0
+                            onCurrentIndexChanged: signalModel.updateMode(model.name, currentIndex === 1 ? "Auto" : "Override")
+                        }
+
                         TextField {
-                            id: ipInput
-                            Layout.fillWidth: true
-                            placeholderText: "Enter IP"
+                            Layout.preferredWidth: parent.width * 0.20
+                            text: model.period
+                            enabled: model.mode === "Auto"
+                            onEditingFinished: signalModel.updatePeriod(model.name, text)
+                        }
+
+                        TextField {
+                            Layout.preferredWidth: parent.width * 0.20
+                            text: model.value
+                            onEditingFinished: signalModel.updateValue(model.name, text)
                         }
                     }
                 }
+            }
+        }
 
-                onAccepted: {
-                    console.log("Connecting to IP:", ipInput.text);
-                    signalModel.connectToServer(ipInput.text);
+        // ✅ Send Button (Centered & Fixed Position)
+        Button {
+            id: sendButton
+            text: "Send"
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 200
+            Layout.preferredHeight: 40
+
+            onClicked: {
+                var dataToSend = [];
+                for (var key in applicationWindow.editedRows) {
+                    var entry = applicationWindow.editedRows[key];
+                    dataToSend.push(entry.name + " " + entry.period + " " + entry.value);
+                }
+
+                if (dataToSend.length > 0) {
+                    signalModel.sendData(dataToSend);
+                    applicationWindow.editedRows = {};  // ✅ Clear after sending
                 }
             }
         }
+    }
+
+    // ✅ Server IP Dialog
+    Dialog {
+        id: connectDialog
+        title: "Enter Server IP"
+        modal: true
+        standardButtons: Dialog.Cancel | Dialog.Ok
+        closePolicy: Popup.CloseOnEscape
+
+        ColumnLayout {
+            spacing: 10
+            width: parent.width
+            RowLayout {
+                spacing: 5
+                Label { text: "Server IP" }
+                TextField {
+                    id: ipInput
+                    Layout.fillWidth: true
+                    placeholderText: "Enter IP"
+                }
+            }
+        }
+
+        onAccepted: signalModel.connectToServer(ipInput.text)
     }
 }

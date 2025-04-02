@@ -2,38 +2,42 @@
 #define SIGNALMODEL_H
 
 #include <QAbstractListModel>
-#include <QObject>
-#include <QVector>
-#include "SocketClient.h"
+#include <QMap>
 
-struct SignalEntry {
+struct SignalData {
+    int index;
     QString name;
     QString mode;
-    int period;
+    QString period;
     QString value;
 };
 
 class SignalModel : public QAbstractListModel {
     Q_OBJECT
+
 public:
     explicit SignalModel(QObject *parent = nullptr);
-    virtual ~SignalModel() {}
-    void initialize();
 
-    Q_INVOKABLE void filterData(const QString &searchTerm);
-    Q_INVOKABLE void updateData(const QString &name, const QString &mode, int period, const QString &value);
-    Q_INVOKABLE void sendData();
-    Q_INVOKABLE void connectToServer(const QString &inputIP);
-    Q_INVOKABLE void disconnectFromServer();
+    enum SignalRoles {
+        NameRole = Qt::UserRole + 1,
+        ModeRole,
+        PeriodRole,
+        ValueRole
+    };
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    Q_INVOKABLE void updateValue(const QString &name, const QString &newValue);
+    Q_INVOKABLE void updateMode(const QString &name, const QString &newMode);
+    Q_INVOKABLE void filterData(const QString &searchText);  // ✅ Added filter function
+
+    void initialize();  // Load data from DB
+
 private:
-    QVector<SignalEntry> allSignals;
-    QVector<SignalEntry> filteredSignals;
-    SocketClient m_socket;
+    QMap<QString, SignalData> allSignals;  // Stores all signals
+    QList<QString> filteredKeys;  // Holds the filtered list for UI display
 };
 
 #endif // SIGNALMODEL_H
