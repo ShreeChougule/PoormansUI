@@ -86,16 +86,22 @@ ApplicationWindow {
                         Text { Layout.preferredWidth: parent.width * 0.30; text: model.name; horizontalAlignment: Text.AlignHCenter }
 
                         ComboBox {
+                            id: modeCombo
                             Layout.preferredWidth: parent.width * 0.20
-                            model: ["Override", "Auto"]
-                            currentIndex: model.mode === "Auto" ? 1 : 0
-                            onCurrentIndexChanged: signalModel.updateMode(model.name, currentIndex === 1 ? "Auto" : "Override")
+                            model: ["Auto", "Override"]
+                            currentIndex: model.mode === "Override" ?  1 : 0
+                            onCurrentIndexChanged:{
+                                periodField.enabled = (currentIndex === 1);
+                                signalModel.updateMode(model.name, currentIndex === 0 ? "Auto" : "Override")
+                            }
                         }
 
+                        // ✅ Period Field (Disabled when Mode is Auto)
                         TextField {
+                            id: periodField
                             Layout.preferredWidth: parent.width * 0.20
                             text: model.period
-                            enabled: model.mode === "Auto"
+                            enabled: modeCombo.currentIndex === 1  // Enable when Mode is "Override"
                             onEditingFinished: signalModel.updatePeriod(model.name, text)
                         }
 

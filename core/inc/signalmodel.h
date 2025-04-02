@@ -31,7 +31,8 @@ public:
 
     Q_INVOKABLE void updateValue(const QString &name, const QString &newValue);
     Q_INVOKABLE void updateMode(const QString &name, const QString &newMode);
-    Q_INVOKABLE void filterData(const QString &searchText);  // ✅ Added filter function
+    Q_INVOKABLE void filterData(const QString &searchText);
+    Q_INVOKABLE void updatePeriod(const QString &name, const QString &newPeriod);
 
     void initialize();  // Load data from DB
 

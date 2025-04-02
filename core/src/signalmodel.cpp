@@ -24,10 +24,10 @@ void SignalModel::initialize() {
 
     while (query.next()) {
         SignalData entry;
-        entry.index = ++signalIndex;
+        entry.index = signalIndex++;
         entry.name = query.value(0).toString();
-        entry.mode = "Override";
-        entry.period = "1000";
+        entry.mode = "Auto";
+        entry.period = "";
         entry.value = query.value(1).toString();
         fetchedData.append(entry);
     }
@@ -65,7 +65,20 @@ void SignalModel::updateValue(const QString &name, const QString &newValue) {
         if (row != -1) {
             emit dataChanged(index(row, 0), index(row, 0), { ValueRole });
         }
-        qDebug() << "Updated value for:" << name << "New Value:" << newValue;
+        qDebug() << "Updated value for:" << name << "Period Mode :"<< allSignals[name].mode << "Period(ms) : "
+                 << allSignals[name].period << "New Value:" << newValue;
+    }
+}
+
+void SignalModel::updatePeriod(const QString &name, const QString &newPeriod){
+    if (allSignals.contains(name)) {
+        allSignals[name].period = newPeriod;
+        int row = filteredKeys.indexOf(name);
+        if (row != -1) {
+            emit dataChanged(index(row, 0), index(row, 0), { PeriodRole });
+        }
+        qDebug() << "Updated Row for:" << name << "New Period:" << newPeriod;
+
     }
 }
 
