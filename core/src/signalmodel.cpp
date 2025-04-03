@@ -48,14 +48,6 @@ void SignalModel::initialize() {
 
 // ✅ Define roles
 QHash<int, QByteArray> SignalModel::roleNames() const {
-/*    return {
-        { Qt::UserRole, "index" },
-        { NameRole, "name" },
-        { ModeRole, "mode" },
-        { PeriodRole, "period" },
-        { ValueRole, "value" }
-    };
-*/
     QHash<int, QByteArray> roles;
     roles[Qt::UserRole + 1] = "index";
     roles[Qt::UserRole + 2] = "name";
@@ -91,8 +83,6 @@ void SignalModel::updatePeriod(const QString &name, const QString &newPeriod){
 }
 
 void SignalModel::updateMode(const QString &name, const QString &newMode) {
-    qDebug() << "Updated mode for:" << name << "New Mode:" << newMode;
-
     if (allSignals.contains(name)) {
         allSignals[name].mode = newMode;
         int row = filteredKeys.indexOf(name);
@@ -119,7 +109,7 @@ void SignalModel::filterData(const QString &searchText) {
     }
 
     endResetModel();
-    qDebug() << "Filtered signals count:" << filteredKeys.size();
+//    qDebug() << "Filtered signals count:" << filteredKeys.size();
 }
 
 // ✅ Correct implementation of rowCount()
@@ -153,6 +143,10 @@ QVariant SignalModel::data(const QModelIndex &index, int role) const {
 void SignalModel::sendData(const QStringList &data) {
     qDebug() << "Recieved data from qml, data size -  "<<data.size();
     for (const QString &entry : data) {
-        qDebug() << "Sending data:" << entry;  // You can replace this with actual sending logic
+        if (allSignals.contains(entry)) {
+        qDebug() << "Sending data: Name- " <<  allSignals[entry].name << ", Mode- " << allSignals[entry].mode
+                 << ", Period- "<<allSignals[entry].period << ", Value- "<<allSignals[entry].value;
+        }
+
     }
 }
