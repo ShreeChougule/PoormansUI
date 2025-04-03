@@ -77,6 +77,7 @@ ApplicationWindow {
                     height: 40
                     color: model.index % 2 === 0 ? "#ECEFF1" : "white"
                     border.color: "blue"
+                    property string signalName: model.name  // ✅ Explicitly bind the model's name
 
                     RowLayout {
                         anchors.fill: parent
@@ -90,9 +91,12 @@ ApplicationWindow {
                             Layout.preferredWidth: parent.width * 0.20
                             model: ["Auto", "Override"]
                             currentIndex: model.mode === "Override" ?  1 : 0
+
                             onCurrentIndexChanged:{
                                 periodField.enabled = (currentIndex === 1);
-                                signalModel.updateMode(model.name, currentIndex === 0 ? "Auto" : "Override")
+
+                                console.log("Updating mode for:",signalName); // Debugging output
+                                signalModel.updateMode(signalName, currentIndex === 0 ? "Auto" : "Override")
                             }
                         }
 
@@ -102,13 +106,20 @@ ApplicationWindow {
                             Layout.preferredWidth: parent.width * 0.20
                             text: model.period
                             enabled: modeCombo.currentIndex === 1  // Enable when Mode is "Override"
-                            onEditingFinished: signalModel.updatePeriod(model.name, text)
+                            onEditingFinished: {
+                                signalModel.updatePeriod(model.name, text)
+                                editedRows[model.index] = { "name": signalName}
+                            }
                         }
 
                         TextField {
+                            id: valueField
                             Layout.preferredWidth: parent.width * 0.20
                             text: model.value
-                            onEditingFinished: signalModel.updateValue(model.name, text)
+                            onEditingFinished: {
+                                signalModel.updateValue(model.name, text)
+                                editedRows[model.index] = { "name": signalName}
+                            }
                         }
                     }
                 }
@@ -127,7 +138,7 @@ ApplicationWindow {
                 var dataToSend = [];
                 for (var key in applicationWindow.editedRows) {
                     var entry = applicationWindow.editedRows[key];
-                    dataToSend.push(entry.name + " " + entry.period + " " + entry.value);
+                    dataToSend.push(entry.name);
                 }
 
                 if (dataToSend.length > 0) {

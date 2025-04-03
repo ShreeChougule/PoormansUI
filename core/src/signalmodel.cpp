@@ -48,13 +48,21 @@ void SignalModel::initialize() {
 
 // ✅ Define roles
 QHash<int, QByteArray> SignalModel::roleNames() const {
-    return {
+/*    return {
         { Qt::UserRole, "index" },
         { NameRole, "name" },
         { ModeRole, "mode" },
         { PeriodRole, "period" },
         { ValueRole, "value" }
     };
+*/
+    QHash<int, QByteArray> roles;
+    roles[Qt::UserRole + 1] = "index";
+    roles[Qt::UserRole + 2] = "name";
+    roles[Qt::UserRole + 3] = "mode";
+    roles[Qt::UserRole + 4] = "period";
+    roles[Qt::UserRole + 5] = "value";
+    return roles;
 }
 
 // ✅ Fast updates using `QMap`
@@ -63,10 +71,10 @@ void SignalModel::updateValue(const QString &name, const QString &newValue) {
         allSignals[name].value = newValue;
         int row = filteredKeys.indexOf(name);
         if (row != -1) {
-            emit dataChanged(index(row, 0), index(row, 0), { ValueRole });
+            emit dataChanged(index(row, 0), index(row, 0), { Qt::UserRole + 5 });
         }
-        qDebug() << "Updated value for:" << name << "Period Mode :"<< allSignals[name].mode << "Period(ms) : "
-                 << allSignals[name].period << "New Value:" << newValue;
+      //  qDebug() << "Updated value for:" << name << "Period Mode :"<< allSignals[name].mode << "Period(ms) : "
+      //           << allSignals[name].period << "New Value:" << newValue;
     }
 }
 
@@ -75,21 +83,23 @@ void SignalModel::updatePeriod(const QString &name, const QString &newPeriod){
         allSignals[name].period = newPeriod;
         int row = filteredKeys.indexOf(name);
         if (row != -1) {
-            emit dataChanged(index(row, 0), index(row, 0), { PeriodRole });
+            emit dataChanged(index(row, 0), index(row, 0), { Qt::UserRole + 4 });
         }
-        qDebug() << "Updated Row for:" << name << "New Period:" << newPeriod;
+      //  qDebug() << "Updated Row for:" << name << "New Period:" << newPeriod;
 
     }
 }
 
 void SignalModel::updateMode(const QString &name, const QString &newMode) {
+    qDebug() << "Updated mode for:" << name << "New Mode:" << newMode;
+
     if (allSignals.contains(name)) {
         allSignals[name].mode = newMode;
         int row = filteredKeys.indexOf(name);
         if (row != -1) {
-            emit dataChanged(index(row, 0), index(row, 0), { ModeRole });
+            emit dataChanged(index(row, 0), index(row, 0), { Qt::UserRole + 3 });
         }
-        qDebug() << "Updated mode for:" << name << "New Mode:" << newMode;
+       // qDebug() << "Updated mode for:" << name << "New Mode:" << newMode;
     }
 }
 
@@ -123,15 +133,26 @@ QVariant SignalModel::data(const QModelIndex &index, int role) const {
         return QVariant();
     }
 
+
     const QString &signalKey = filteredKeys.at(index.row());  // ✅ Correct indexing
     const SignalData &signal = allSignals.value(signalKey);
+  //  qDebug() << "Fetching data for row" << index.row() << "Role:" << role
+  //           << "Name:" << signal.name << "Mode:" << signal.mode;
 
     switch (role) {
-        case Qt::UserRole: return signal.index;
-        case NameRole: return signal.name;
-        case ModeRole: return signal.mode;
-        case PeriodRole: return signal.period;
-        case ValueRole: return signal.value;
+        case Qt::UserRole + 1: return signal.index;
+        case Qt::UserRole + 2: return signal.name;
+        case Qt::UserRole + 3: return signal.mode;
+        case Qt::UserRole + 4: return signal.period;
+        case Qt::UserRole + 5: return signal.value;
         default: return QVariant();
+    }
+}
+
+// Handle the data sent from QML (Name + Value)
+void SignalModel::sendData(const QStringList &data) {
+    qDebug() << "Recieved data from qml, data size -  "<<data.size();
+    for (const QString &entry : data) {
+        qDebug() << "Sending data:" << entry;  // You can replace this with actual sending logic
     }
 }
