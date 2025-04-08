@@ -17,12 +17,18 @@ DEFINES+= SOCKET_COMM
 SOURCES += \
         core/src/main.cpp \
         core/src/signalmodel.cpp \
-        core/src/SocketClient.cpp
+        core/src/simservice.cpp \
+        core/src/sinks/socketsink.cpp
 #       core/src/moc_signalmodel.cpp
 
 HEADERS += \
+        core/api/IDataParser.h \
+        core/api/IDataSink.h \
+        core/api/ISimService.h \
+        core/api/SimTypes.h \
         core/inc/signalmodel.h \
-        core/inc/SocketClient.h
+        core/inc/simservice.h \
+        core/inc/sinks/socketsink.h
 
 RESOURCES += ui/qml.qrc
 

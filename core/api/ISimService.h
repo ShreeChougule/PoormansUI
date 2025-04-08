@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////////
-// NAME:  simservice.h
+// NAME:  ISimService.h
 //
 //  COPYRIGHT NOTICE:
 //  (C) KPIT Technologies Ltd
@@ -13,35 +13,16 @@
 //  permission of KPIT Technologies Ltd.
 //
 ////////////////////////////////////////////////////////////////////////////////////
-#ifndef SIMSERVICE_H
-#define SIMSERVICE_H
 
-#include <QDebug>
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include <QtSql/QSqlDatabase>
-#include <QSqlQuery>
+#ifndef ISIMSERVICE_H
+#define ISIMSERVICE_H
 
-#include "core/inc/signalmodel.h"
-#include "core/inc/sinks/socketsink.h"
-
-class SimService : public ISimService {
+class ISimService {
  public:
-  SimService();
-  ~SimService();
-
-  bool LoadQML();
-
-  virtual bool InitializeConnection(const char *ip, const unsigned int port);
-  virtual int SendVehicleData(const char *data);
-
- private:
-  bool populateData();
-
- private:
-  QQmlApplicationEngine m_engine;
-  IDataSink *m_pdataSink;
-  SignalModel m_signalModel;
+  ~ISimService() {}
+  virtual bool InitializeConnection(const char *ip,
+                                    const unsigned int port) = 0;
+  virtual int SendVehicleData(const char *data) = 0;
 };
-#endif  // SIMSERVICE_H
+
+#endif  // ISIMSERVICE_H

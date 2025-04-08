@@ -95,7 +95,6 @@ ApplicationWindow {
                             onCurrentIndexChanged:{
                                 periodField.enabled = (currentIndex === 1);
 
-                                console.log("Updating mode for:",signalName); // Debugging output
                                 signalModel.updateMode(signalName, currentIndex === 0 ? "Auto" : "Override")
                             }
                         }

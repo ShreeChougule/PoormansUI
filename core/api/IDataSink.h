@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////////
-// NAME:  simservice.h
+// NAME:  IDataSink.h
 //
 //  COPYRIGHT NOTICE:
 //  (C) KPIT Technologies Ltd
@@ -13,35 +13,15 @@
 //  permission of KPIT Technologies Ltd.
 //
 ////////////////////////////////////////////////////////////////////////////////////
-#ifndef SIMSERVICE_H
-#define SIMSERVICE_H
+#ifndef IDATASINK_H
+#define IDATASINK_H
 
-#include <QDebug>
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include <QtSql/QSqlDatabase>
-#include <QSqlQuery>
-
-#include "core/inc/signalmodel.h"
-#include "core/inc/sinks/socketsink.h"
-
-class SimService : public ISimService {
+class IDataSink {
  public:
-  SimService();
-  ~SimService();
-
-  bool LoadQML();
-
-  virtual bool InitializeConnection(const char *ip, const unsigned int port);
-  virtual int SendVehicleData(const char *data);
-
- private:
-  bool populateData();
-
- private:
-  QQmlApplicationEngine m_engine;
-  IDataSink *m_pdataSink;
-  SignalModel m_signalModel;
+  virtual ~IDataSink() {}
+  virtual bool Connect(const char *ip, const unsigned int port) = 0;
+  virtual int SendData(const char *data) = 0;
+  virtual int RecieveData(char data[]) = 0;
 };
-#endif  // SIMSERVICE_H
+
+#endif  // IDATASINK_H
