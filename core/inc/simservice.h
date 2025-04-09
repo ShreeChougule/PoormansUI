@@ -34,7 +34,7 @@ class SimService : public ISimService {
   bool LoadQML();
 
   virtual bool InitializeConnection(const char *ip, const unsigned int port);
-  virtual int SendVehicleData(const char *data);
+  virtual int SendVehicleData(std::vector<SignalData> signalList);
 
  private:
   bool populateData();
@@ -43,5 +43,7 @@ class SimService : public ISimService {
   QQmlApplicationEngine m_engine;
   IDataSink *m_pdataSink;
   SignalModel m_signalModel;
+  /*Old kvehicle Simulator vehicle signal ID mapping*/
+  std::map<QString, int> m_dataIdMap;
 };
 #endif  // SIMSERVICE_H

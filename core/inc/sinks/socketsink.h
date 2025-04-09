@@ -36,8 +36,6 @@
 
 #include "core/api/IDataSink.h"
 
-#define PORT 7000
-
 class SocketSink : public IDataSink {
  private:
   static SocketSink *mSocketSink;

@@ -13,45 +13,6 @@ void SignalModel::SetCb(ISimService *pSimService) {
   m_psimService = pSimService;
 }
 
-// ✅ Load data from DB into local structure
-void SignalModel::initialize() {
-  beginResetModel();
-  allSignals.clear();
-  filteredKeys.clear();
-
-  QSqlQuery query(R"(
-        SELECT Signal.name, Signal_Attributes.default_value
-        FROM Signal
-        LEFT JOIN Signal_Attributes ON Signal.signal_id = Signal_Attributes.signal_id
-    )");
-
-  QList<SignalData> fetchedData;
-  int signalIndex = 0;
-
-  while (query.next()) {
-    SignalData entry;
-    entry.index = signalIndex++;
-    entry.name = query.value(0).toString();
-    entry.mode = "Auto";
-    entry.period = "";
-    entry.value = query.value(1).toString();
-    fetchedData.append(entry);
-  }
-
-  if (query.lastError().isValid()) {
-    qDebug() << "SQL Error:" << query.lastError().text();
-  }
-
-  for (const auto &signal : fetchedData) {
-    allSignals.insert(signal.name, signal);
-  }
-
-  // Initially, show all signals
-  filteredKeys = allSignals.keys();
-
-  endResetModel();
-}
-
 void SignalModel::initialize(const QList<SignalData>& fetchedData){
     beginResetModel();
     allSignals.clear();
@@ -71,12 +32,16 @@ void SignalModel::initialize(const QList<SignalData>& fetchedData){
 // ✅ Define roles
 QHash<int, QByteArray> SignalModel::roleNames() const {
   QHash<int, QByteArray> roles;
-  roles[Qt::UserRole + 1] = "index";
+  roles[Qt::UserRole + 1] = "id";
   roles[Qt::UserRole + 2] = "name";
   roles[Qt::UserRole + 3] = "mode";
   roles[Qt::UserRole + 4] = "period";
   roles[Qt::UserRole + 5] = "value";
   return roles;
+}
+
+void SignalModel::connectToServer(const QString &IpAddr){
+m_psimService->InitializeConnection(IpAddr.toUtf8().constData(),PORT);
 }
 
 // ✅ Fast updates using `QMap`
@@ -131,7 +96,7 @@ void SignalModel::filterData(const QString &searchText) {
   }
 
   endResetModel();
-  //    qDebug() << "Filtered signals count:" << filteredKeys.size();
+  //qDebug() << "Filtered signals count:" << filteredKeys.size();
 }
 
 // ✅ Correct implementation of rowCount()
@@ -153,7 +118,7 @@ QVariant SignalModel::data(const QModelIndex &index, int role) const {
 
   switch (role) {
     case Qt::UserRole + 1:
-      return signal.index;
+      return signal.id;
     case Qt::UserRole + 2:
       return signal.name;
     case Qt::UserRole + 3:
@@ -170,12 +135,15 @@ QVariant SignalModel::data(const QModelIndex &index, int role) const {
 // Handle the data sent from QML (Name + Value)
 void SignalModel::sendData(const QStringList &data) {
   qDebug() << "Recieved data from qml, data size -  " << data.size();
+
+  std::vector<SignalData> signalsToSend;
   for (const QString &entry : data) {
     if (allSignals.contains(entry)) {
       qDebug() << "Sending data: Name- " << allSignals[entry].name << ", Mode- "
                << allSignals[entry].mode << ", Period- "
                << allSignals[entry].period << ", Value- "
                << allSignals[entry].value;
+      signalsToSend.emplace_back(allSignals[entry]);
     }
   }
 }

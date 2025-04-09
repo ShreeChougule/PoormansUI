@@ -19,8 +19,10 @@
 #include <QAbstractListModel>
 #include <QMap>
 
+#define PORT 7000
+
 struct SignalData {
-  int index;
+  int id;
   QString name;
   QString mode;
   QString period;

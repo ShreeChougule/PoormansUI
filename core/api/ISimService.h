@@ -17,12 +17,15 @@
 #ifndef ISIMSERVICE_H
 #define ISIMSERVICE_H
 
+#include "core/api/SimTypes.h"
+
 class ISimService {
  public:
-  ~ISimService() {}
+  virtual ~ISimService() {}
+
   virtual bool InitializeConnection(const char *ip,
                                     const unsigned int port) = 0;
-  virtual int SendVehicleData(const char *data) = 0;
+  virtual int SendVehicleData(std::vector<SignalData> signalList) = 0;
 };
 
 #endif  // ISIMSERVICE_H

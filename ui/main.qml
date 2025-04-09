@@ -83,9 +83,19 @@ ApplicationWindow {
                         anchors.fill: parent
                         spacing: 0
 
-                        Text { Layout.preferredWidth: parent.width * 0.10; text: (model.index + 1).toString(); horizontalAlignment: Text.AlignHCenter }
-                        Text { Layout.preferredWidth: parent.width * 0.30; text: model.name; horizontalAlignment: Text.AlignHCenter }
-
+                        Text { Layout.preferredWidth: parent.width * 0.10; text: (model.id).toString(); horizontalAlignment: Text.AlignHCenter }
+                       // Text { Layout.preferredWidth: parent.width * 0.30; text: model.name; horizontalAlignment: Text.AlignHCenter }
+                        TextEdit {
+                            Layout.preferredWidth: parent.width * 0.30
+                            text: model.name
+                            readOnly: true
+                            selectByMouse: true
+                            wrapMode: TextEdit.NoWrap
+                            horizontalAlignment: Text.AlignHCenter
+                            font.bold: true
+                            padding: 0
+                            //backgroundVisible: false  // This hides the gray background in older versions
+                        }
                         ComboBox {
                             id: modeCombo
                             Layout.preferredWidth: parent.width * 0.20
